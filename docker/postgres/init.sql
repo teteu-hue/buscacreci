@@ -1,3 +1,31 @@
+CREATE TABLE public.usuarios
+(
+    codigo serial NOT NULL,
+    nome_completo character varying,
+    email character varying,
+    ativo boolean NOT NULL DEFAULT true,
+    ip_cadastro character varying,
+    google_id character varying,
+    saldo numeric,
+    momento_cadastro timestamp with time zone,
+    PRIMARY KEY (codigo)
+);
+
+CREATE TABLE public.consultas_creci
+(
+    codigo serial NOT NULL,
+    creci character varying NOT NULL,
+    creci_id character varying,
+    codigo_solicitacao character varying,
+    usuario_codigo integer,
+    data_cadastro timestamp with time zone,
+    data_finalizacao timestamp with time zone,
+    situacao character varying,
+    mensagem_erro character varying,
+    mensagem_sucesso character varying,
+    PRIMARY KEY (codigo)
+);
+
 CREATE TABLE IF NOT EXISTS creci
 (
     id serial NOT NULL,
@@ -9,6 +37,7 @@ CREATE TABLE IF NOT EXISTS creci
     atualizado_em timestamp with time zone NOT NULL DEFAULT now(),
     situacao character varying,
     estado character varying,
+    usuario_codigo integer,
     cidade character varying,
     numero_documento character varying,
     PRIMARY KEY (id),

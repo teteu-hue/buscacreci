@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Infraestrutura\APIs\BuscaCorretor\Controladores\Index;
 
-use App\Aplicacao\CasosDeUso\ConsultarCreci;
-use App\Infraestrutura\APIs\BuscaCorretor\Controladores\Middlewares\Controller;
-use DI\Container;
 use Exception;
+use DI\Container;
+use App\Aplicacao\CasosDeUso\ConsultarCreci;
+use App\Aplicacao\CasosDeUso\EntradaESaida\ErroDomain;
+use App\Dominio\ObjetoValor\IdentificacaoUnica;
+use App\Infraestrutura\APIs\BuscaCorretor\Controladores\Middlewares\Controller;
 
 final class IndexController extends Controller
 {
@@ -26,18 +28,34 @@ final class IndexController extends Controller
 
 		try {
 
-			$creci = trim($_GET['creci']);
+			$creci = htmlspecialchars(strip_tags(trim($_GET['creci'])));
 
 			$consultarCreci = $this->container->get(ConsultarCreci::class);
-			$saidaCreci = $consultarCreci->consultarCreci($creci);
+			$resposta = $consultarCreci->consultarCreci($creci);
+
+			if($resposta instanceof ErroDomain){
+				$this->response([
+					'statusCode' => $resposta->codigo,
+					'statusMessage' => 'Bad Request',
+					'message' => $resposta->mensagem
+				]);
+				return;
+			}
+
+			if(is_a($resposta, IdentificacaoUnica::class)){
+				$this->response([
+					'statusCode' => 200,
+					'statusMessage' => 'OK',
+					'message' => 'Seu CRECI foi enviado para o sistema de consulta, você pode acompanhar o status da consulta pelo código abaixo.',
+					'codigo_solicitacao' => $resposta->get()
+				]);
+				return;
+			}
 
 			$this->response([
-				'codigo' => $saidaCreci->creciID,
-				'creciCompleto' => $saidaCreci->creciCompleto,
-				'nomeCompleto' => $saidaCreci->nomeCompleto,
-				'situacao' => $saidaCreci->situacao,
-				'cidade' => $saidaCreci->cidade,
-				'estado' => $saidaCreci->estado,
+				'statusCode' => 422,
+				'statusMessage' => 'Unprocessable Entity',
+				'message' => 'Ocorreu um erro ao processar a consulta do CRECI. Tente novamente mais tarde.'
 			]);
 
 		}catch (Exception $e){
